@@ -218,10 +218,18 @@ class Video extends Component {
   }
 
   play() {
-    if (this.state.paused) this.togglePlay()
+    if(this.state.gold != undefined && this.state.gold == false){
+      this.props.showPremiumPopup();
+      return;
+    }
+    if (this.state.paused) this.togglePlay();
   }
 
   togglePlay() {
+    if(this.state.gold != undefined && this.state.gold == false){
+      this.props.showPremiumPopup();
+      return;
+    }
     this.setState({ paused: !this.state.paused }, () => {
       this.props.onPlay(!this.state.paused)
       Orientation.getOrientation((e, orientation) => {
@@ -434,6 +442,7 @@ class Video extends Component {
           onMorePress={() => onMorePress()}
           theme={setTheme}
           inlineOnly={inlineOnly}
+          gold={this.state.gold}
         />
       </Animated.View>
     )

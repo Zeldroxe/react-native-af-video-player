@@ -30,7 +30,7 @@ class Controls extends Component {
     this.state = {
       hideControls: false,
       seconds: 0,
-      seeking: false
+      seeking: false,
     }
     this.animControls = new Animated.Value(1)
     this.scale = new Animated.Value(1)
@@ -136,6 +136,7 @@ class Controls extends Component {
     return (
       <Touchable onPress={() => this.hideControls()}>
         <Animated.View style={[styles.container, { opacity: this.animControls }]}>
+        {this.props.gold == undefined || this.props.gold == true &&
           <TopBar
             title={title}
             logo={logo}
@@ -143,6 +144,7 @@ class Controls extends Component {
             onMorePress={() => onMorePress()}
             theme={{ title: theme.title, more: theme.more }}
           />
+        }
           <Animated.View style={[styles.flex, { transform: [{ scale: this.scale }] }]}>
             <PlayButton
               onPress={() => this.props.togglePlay()}
@@ -151,6 +153,7 @@ class Controls extends Component {
               theme={center}
             />
           </Animated.View>
+          {this.props.gold == undefined || this.props.gold == true &&
           <ControlBar
             toggleFS={() => this.props.toggleFS()}
             toggleMute={() => this.props.toggleMute()}
@@ -167,6 +170,7 @@ class Controls extends Component {
             inlineOnly={inlineOnly}
             hideFullScreenControl={hideFullScreenControl}
           />
+          }
         </Animated.View>
       </Touchable>
     )
