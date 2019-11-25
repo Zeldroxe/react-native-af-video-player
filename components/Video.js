@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import {
   Text,
@@ -51,7 +51,7 @@ const defaultTheme = {
   loading: '#FFF'
 }
 
-class Video extends Component {
+class Video extends React.PureComponent {
   constructor(props) {
     super(props)
     this.state = {
@@ -65,7 +65,8 @@ class Video extends Component {
       currentTime: 0,
       seeking: false,
       renderError: false,
-      gold: this.props.gold
+      gold: this.props.gold,
+      resizeMode: 'contain',
     }
     this.animInline = new Animated.Value(Win.width * 0.5625)
     this.animFullscreen = new Animated.Value(Win.width * 0.5625)
@@ -91,18 +92,44 @@ class Video extends Component {
     if (!this.state.loading) return
     this.props.onLoad(data)
     const { height, width } = data.naturalSize   
-    const ratio = height === 'undefined' && width === 'undefined' ?
-      (9 / 16) : (height / width)
+    let ratio = height === 'undefined' && width === 'undefined' ?
+      (3 / 4) : (height / width)
     // const inlineHeight = this.props.lockRatio ?
     //   (Win.width / this.props.lockRatio)
     //   : (Win.width * ratio)
 
-    console.log("fullscreen", this.state.fullScreen);
-    const higherDim = this.state.fullScreen ? Win.width < Win.height ? Win.height : Win.width : Win.width;
-    const inlineHeight = this.props.lockRatio ?
-    (higherDim / this.props.lockRatio)
-    : (higherDim * ratio)
 
+    //console.log("fullscreen", this.state.fullScreen);
+    const higherDim = this.state.fullScreen ? Win.width < Win.height ? Win.height : Win.width : Win.width;
+   
+
+    if(this.state.fullScreen){
+      this.setState({resizeMode: 'contain'});
+      if(width > height){
+        Orientation.lockToLandscape();
+        ratio = 16/9;
+      } else {
+        Orientation.lockToPortrait();
+        ratio = 3/4;
+      }
+    } else {
+      if(width > height){
+        this.setState({resizeMode: 'contain'});
+        ratio = 16/9;
+      } else {
+        this.setState({resizeMode: 'cover'});
+        ratio = 3/4;
+
+      }
+    }
+
+    let inlineHeight = this.props.lockRatio ?
+    (higherDim / this.props.lockRatio)
+    : (higherDim / ratio);
+    
+    if(inlineHeight > (Win.width * 4) / 3){
+      inlineHeight = (Win.width * 4) / 3;
+    }
 
 
     this.setState({
@@ -198,8 +225,12 @@ class Video extends Component {
   }
 
   BackHandler() {
+    console.log("BackHandler");
     if (this.state.fullScreen) {
       this.setState({ fullScreen: false }, () => {
+        console.log("lockToPortrait");
+
+        Orientation.lockToPortrait();
         this.animToInline()
         this.props.onFullScreen(this.state.fullScreen)
         if (this.props.fullScreenOnly && !this.state.paused) this.togglePlay()
@@ -256,7 +287,7 @@ class Video extends Component {
   toggleFS() {
     this.setState({ fullScreen: !this.state.fullScreen }, () => {
       Orientation.getOrientation((e, orientation) => {
-        console.log("state", this.state.fullScreen);
+        //console.log("state", this.state.fullScreen);
 
         if (this.state.fullScreen) {
           const initialOrient = Orientation.getInitialOrientation()
@@ -276,6 +307,7 @@ class Video extends Component {
           // setTimeout(() => {
           //   if (!this.props.lockPortraitOnFsExit) Orientation.unlockAllOrientations()
           // }, 1500)
+          Orientation.lockToPortrait();
         }
       })
     })
@@ -369,11 +401,11 @@ class Video extends Component {
       placeholder,
       theme,
       onTimedMetadata,
-      resizeMode,
       onMorePress,
       inlineOnly,
       playInBackground,
-      playWhenInactive
+      playWhenInactive,
+      controlDuration
     } = this.props
 
     const inline = {
@@ -399,12 +431,12 @@ class Video extends Component {
         <StatusBar hidden={fullScreen} />
         {
           ((loading && placeholder) || currentTime < 0.01) &&
-          <Image resizeMode="cover" style={styles.image} {...checkSource(placeholder)} />
+          <Image resizeMode={this.state.resizeMode} style={styles.image} {...checkSource(placeholder)} />
         }
         <VideoPlayer
           {...checkSource(url)}
           paused={paused}
-          resizeMode={resizeMode}
+          resizeMode={this.state.resizeMode}
           repeat={loop}
           style={fullScreen ? styles.fullScreen : inline}
           ref={(ref) => { this.player = ref }}
@@ -443,6 +475,7 @@ class Video extends Component {
           theme={setTheme}
           inlineOnly={inlineOnly}
           gold={this.state.gold}
+          controlDuration={controlDuration}
         />
       </Animated.View>
     )
@@ -493,7 +526,8 @@ Video.propTypes = {
   logo: PropTypes.string,
   title: PropTypes.string,
   theme: PropTypes.object,
-  resizeMode: PropTypes.string
+  resizeMode: PropTypes.string,
+  controlDuration: PropTypes.number,
 }
 
 Video.defaultProps = {
@@ -522,7 +556,8 @@ Video.defaultProps = {
   logo: undefined,
   title: '',
   theme: defaultTheme,
-  resizeMode: 'contain'
+  resizeMode: 'contain',
+  controlDuration: 3,
 }
 
 export default Video
